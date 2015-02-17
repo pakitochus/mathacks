@@ -1,5 +1,6 @@
 function [bestC,bestacc] = selectOptimumC(XTRAIN,ytrain)
     % Selection of optimum C by x-validation 
+	% Requires: LIBSVM
     c=logspace(-2, 0, 13);
     bestacc=0;
     bestC=0;

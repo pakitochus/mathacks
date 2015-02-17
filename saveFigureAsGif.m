@@ -1,4 +1,5 @@
 function saveFigureAsGif(gifname, seg)
+% Saves an animated 3D figure as a GIF 
 fig=gcf;
 h=gca;
 gif_fps = 24;

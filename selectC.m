@@ -1,4 +1,5 @@
 function [bestc,bestg] = selectC(ytrain,XTRAIN,kernel)
+% Selects optimum C value in a linear kernel (using LIBLINEAR) or another SVM kernel (using LIBSVM). 
 bestcv = 0;
 for log2c = -15:5,
     
