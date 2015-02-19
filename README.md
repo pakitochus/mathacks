@@ -4,6 +4,7 @@ MatHacks
 MatHacks is a collection of miscellaneous files generated to help in 
 Matlab (R) and OCTAVE computing. It currently comprises:
 
+* **FROMSTRUCTTOLATEX** Creates an accuracy-sensitivity-specificity latex table from ```perfStruct``` (an struccture constructed with ```structConfMatErr```), which can be a single strucutre or an array of structures, along with their standard errors. 
 * **MAPBRAIN** performs a proyection of a 3D brain (from a struct I that contains an field img) into a two dimensional plane, using the spherical coordinates and different approaches, as in <http://www.ncbi.nlm.nih.gov/pubmed/25488228>
 * **MATRIXTOLATEX** converts a 1D, 2D or 3D matrix into a latex table that can be imported into whichever latex document. 
 * **PCA_FS** performs a feature selection using PCA
