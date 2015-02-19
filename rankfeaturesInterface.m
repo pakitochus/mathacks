@@ -26,10 +26,13 @@ elseif(any(strcmp(criterion,new)))
             IDX=1:M;
             %             IDX=size(data,2):-1:1;
         case 'pvalue'
+            count=0;
             for comp=1:M
-                fprintf(1, repmat('\b',1,count)); %delete line before
             	Z(comp) = anova1(data(:,comp),group,'off');
-                count=fprintf('%d%%',round(100*comp/M));
+                if(mod(comp,10)==0)
+                    fprintf(1, repmat('\b',1,count)); %delete line before
+                    count=fprintf('%d%%',round(100*comp/M));
+                end
             end
             Z(isnan(Z))=0;
             [~, IDX]= sort(abs(Z),'descend');
