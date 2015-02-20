@@ -3,13 +3,13 @@ function [map,azim,elev] = mapBrain(I, varargin)
 %contains an field img) into a two dimensional plane, using the spherical
 %coordinates and different approaches.
 %
-%   [MAPA, COORD] = MAPBRAIN(I) takes the struct that contains the 3D image
+%   [MAP, AZIM, ELEV] = MAPBRAIN(I) takes the struct that contains the 3D image
 %   in the field img, and projects it into two dimensions. The default
 %   behaviour is a projection of the surface of the image I (using the
 %   distance from the center to the last voxel with an intensity greater
 %   than 0), just as in [1,2].
 %
-%   MAPA contains the 2D projected image using different approaches
+%   MAP contains the 2D projected image using different approaches
 %   (default, the surface of the image I).
 %
 %   COORD contains the 3D vectors that are used to project the image.
@@ -63,11 +63,14 @@ function [map,azim,elev] = mapBrain(I, varargin)
 %       'numfold' performs the projection by estimating the
 %       number of cortex folds that the vector R crosses.
 %
+%       'lbp'
+%
+%
 % created with MATLAB ver.: 7.14.0.739 (R2012a) on Linux 3.11.0-15-generic
 % #25-Ubuntu SMP Thu Jan 30 17:25:07 UTC 2014 i686
 %
 % created by: fjesusmartinez@ugr.es
-% UPDATED: Jan 9th 2015
+% UPDATED: Feb 20th 2015
 %
 % REFs:
 % [1] - F.J. Martinez-Murcia et al. Projecting MRI Brain images for the
@@ -81,7 +84,7 @@ res =1;                 % Angular Resolution
 deformation=0;          % Deformation ratio
 umbral=0;               % Threshold value
 mostrarImagen = false;  % Checks if image is to be shown.
-nlayers=1;              % The whole radius is considered. 
+nlayers=1;              % The whole radius is considered.
 
 % Switches for different projections
 projection='sum';
@@ -106,7 +109,8 @@ if ~isempty(varargin)
                         umbral = max(I.img(:))*th;
                     end
                 case {'sum','thickness','surface','average','numfold',...
-                        'mediahigh','var','skewness','entropy','kurtosis'}
+                        'mediahigh','var','skewness','entropy',...
+                        'kurtosis','lbp'}
                     projection = parametro;
                 case 'nlayers'
                     if (length(varargin)>i)&&(~isempty(varargin{i+1}))
@@ -151,6 +155,8 @@ coord=permute(sub2ind(tam,X,Y,Z), [2 1 3]);
 
 % And map the selected vectors.
 map = zeros(nlayers,size(coord,1), size(coord,2));
+hbin=zeros(prod(size(coord)),1);
+s=1;
 for nl=1:nlayers
     intvl=floor(lon/nlayers);
     for i=1:size(coord,1)
@@ -189,6 +195,63 @@ for nl=1:nlayers
                     else
                         map(nl,i,j)= find(radius>umbral, 1, 'last' );
                     end
+                case 'lbp'
+                    cylplanes=zeros(3,3,length(radius));
+                    for k=1:length(radius)
+                        cylcoords=squeeze(coord(i,j,k));
+                        %radius2=squeeze(coord(i,j,length(radius)));
+                        [rx ry rz]=ind2sub([121 145 121],cylcoords);R1=[rx ry rz];
+                        %[rx ry rz]=ind2sub([121 145 121],radius2);R2=[rx ry rz];
+                        %[cx cy cz]=cylinder2P(ones(length(radius),1),5,R1,R2);
+                        %Co=som_unit_coords([121 145 121],'rect');
+                        %a=[cx(k,1:4);cy(k,1:4);cz(k,1:4)];   % plano k perpencicular al eje
+                        %planecoord(:,:,1)=[rx-1,ry-1,rz; rx,ry-1,rz; rx+1,ry-1,rz]; % coordenadas primera fila
+                        %planecoord(:,:,2)=[rx-1,ry,rz;rx,ry,rz;rx+1,ry,rz]; % coordenadas segunda fila
+                        %planecoord(:,:,3)=[rx-1,ry+1,rz; rx,ry+1,rz;rx+1,ry+1,rz]; % coordenadas tercera fila
+                        
+                        % Bordes
+                        if (rx-1)==0 rx=2; end;
+                        if (rx+1)>size(I.img,1) rx=size(I.img,1)-1; end;
+                        if (ry-1)==0 ry=2; end;
+                        if (ry+1)>size(I.img,2) ry=size(I.img,2)-1; end;
+                        if (rz-1)==0 rz=2; end;
+                        if (rz+1)>size(I.img,3) rz=size(I.img,3)-1; end;
+                        
+                        planeimg=[I.img(rx-1,ry-1,rz) I.img(rx,ry-1,rz) I.img(rx+1,ry-1,rz); I.img(rx-1,ry,rz) I.img(rx,ry,rz) I.img(rx+1,ry,rz); I.img(rx-1,ry+1,rz) I.img(rx,ry+1,rz) I.img(rx+1,ry+1,rz)];
+                        %%%
+                        %scatter3(rx-1,ry-1,rz,'bo');hold on;
+                        %scatter3(rx,ry-1,rz,'bo');
+                        %scatter3(rx+1,ry-1,rz,'bo');
+                        %
+                        %scatter3(rx-1,ry,rz,'ko');
+                        %scatter3(rx,ry,rz,'ko');  % Eje del cilindro
+                        %scatter3(rx+1,ry,rz,'ko');
+                        %
+                        %scatter3(rx-1,ry+1,rz,'go');
+                        %scatter3(rx,ry+1,rz,'go');
+                        %scatter3(rx+1,ry+1,rz,'go');
+                        
+                        radiusplanes(:,:,k)=planeimg;
+                        
+                    end;
+                    radiusplanes=double(radiusplanes);
+                    % Calculo descriptor LBP para
+                    [declbpfeat binlbpfeat]=vol_lbp2(radiusplanes,4,1);  % 4 vecinos, radio=1
+                    
+                    %%%%%%%%%%%%%%%%%%%%%%%%
+                    % RotateIndex = 0;
+                    % FRadius = 1;
+                    % TInterval = 2;
+                    % NeighborPoints = 4;
+                    % TimeLength = 2;
+                    % BorderLength = 1;
+                    % bBilinearInterpolation = 1;
+                    % fHistogram = RIVLBP(radiusplanes, TInterval, FRadius, NeighborPoints, BorderLength, TimeLength, RotateIndex, bBilinearInterpolation);
+                    
+                    map(i,j)=declbpfeat;
+                    hbin=sum(binlbpfeat+1);
+                    map(i,j)=map(i,j)./hbin;
+                    map=log(map);
             end
             %Check for changes
             %Returns the distance
@@ -197,11 +260,11 @@ for nl=1:nlayers
 end
 
 if(mostrarImagen)
-    set(0, 'defaultTextInterpreter', 'latex'); 
+    set(0, 'defaultTextInterpreter', 'latex');
     for i=1:nlayers
         figure(i);
         imagesc(azim,elev,rot90(squeeze(map(i,:,:))));colormap('bone');
-        xlabel('Azimuth $\Theta$'); 
+        xlabel('Azimuth $\Theta$');
         hl=ylabel('Elevation $\varphi$');%set(hl,'Interpreter','latex');
         axis image;
     end
