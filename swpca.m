@@ -124,9 +124,17 @@ end
 
 
 function y = weighting(p,d,k)
-sumatoria = 0;
+sumatoria = 1;
 for jarl=1:length(d),
-    sumatoria = sumatoria+(d(jarl)*exp(-k*(p(jarl)-0.5)));
+    if ndims(p)==1
+        sumatoria = sumatoria + power(-1,1-d(jarl))*exp(-squeeze(abs(p(jarl)))/k);
+    elseif ndims(p)==2
+        sumatoria = sumatoria + power(-1,1-d(jarl))*exp(-squeeze(abs(p(jarl,:)))/k);
+    elseif ndims(p)==3
+        sumatoria = sumatoria + power(-1,1-d(jarl))*exp(-squeeze(abs(p(jarl,:,:)))/k);
+    else
+        error('P matrices with dimensions > 3 not supported');
+    end
 end
-y = (sumatoria/exp(k/2)+1)/2;
+y = sumatoria/2; 
 end

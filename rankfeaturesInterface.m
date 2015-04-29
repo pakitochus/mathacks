@@ -14,7 +14,7 @@ if(any(strcmp(criterion, originals)))
 elseif(any(strcmp(criterion,new)))
     switch(criterion)
         case 'ttest'
-            [~,~,~,stats]=ttest2(data(~group,:),data(group,:));
+            [~,~,~,stats]=ttest2(data(~group,:),data(group,:),[],[],'unequal');
             Z=stats.tstat';
             Z(isnan(Z))=0;
             [~, IDX]= sort(abs(Z),'descend');

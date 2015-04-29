@@ -1,6 +1,6 @@
 function [map,azim,elev] = mapBrain(I, varargin)
-%MAPBRAIN performs a proyection of a 3D brain (from a struct I that
-%contains an field img) into a two dimensional plane, using the spherical
+%MAPBRAIN performs a Spherical Brain Mapping of a 3D brain (from a struct I 
+%that contains an field img) into a two dimensional plane, using the spherical
 %coordinates and different approaches.
 %
 %   [MAP, AZIM, ELEV] = MAPBRAIN(I) takes the struct that contains the 3D image
@@ -196,8 +196,8 @@ for nl=1:nlayers
                         map(nl,i,j)= find(radius>umbral, 1, 'last' );
                     end
                 case 'lbp'
-                    cylplanes=zeros(3,3,length(radius));
-                    for k=1:length(radius)
+                    radiusplanes=zeros(3,3,find(radius>umbral,1,'last'));
+                    for k=1:find(radius>umbral,1,'last')
                         cylcoords=squeeze(coord(i,j,k));
                         %radius2=squeeze(coord(i,j,length(radius)));
                         [rx ry rz]=ind2sub([121 145 121],cylcoords);R1=[rx ry rz];
@@ -235,7 +235,7 @@ for nl=1:nlayers
                         
                     end;
                     radiusplanes=double(radiusplanes);
-                    % Calculo descriptor LBP para
+                    % Compute LBP descriptor
                     [declbpfeat binlbpfeat]=vol_lbp2(radiusplanes,4,1);  % 4 vecinos, radio=1
                     
                     %%%%%%%%%%%%%%%%%%%%%%%%
@@ -248,10 +248,10 @@ for nl=1:nlayers
                     % bBilinearInterpolation = 1;
                     % fHistogram = RIVLBP(radiusplanes, TInterval, FRadius, NeighborPoints, BorderLength, TimeLength, RotateIndex, bBilinearInterpolation);
                     
-                    map(i,j)=declbpfeat;
+                    map(nl,i,j)=declbpfeat;
                     hbin=sum(binlbpfeat+1);
-                    map(i,j)=map(i,j)./hbin;
-                    map=log(map);
+                    map(nl,i,j)=map(nl,i,j)./hbin;
+%                     map=log(map);
             end
             %Check for changes
             %Returns the distance
