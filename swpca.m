@@ -48,26 +48,21 @@ end
 if(size(cat,2)~=length(d))
     error('Number of columns in CAT must be equal to length of D');
 end
-XTR = X(trSet,:);
+meanTr = mean(X,2);
+X = bsxfun(@minus,X,meanTr);
+varTr = var(X,0,2);
+X = bsxfun(@rdivide,X,varTr);
+if(training)
+    XNTEST = X(~trSet,:);
+end
+XNTRAIN = X(trSet,:);
 clear X;
 
 % PERFORM PCA OVER THE TRAINING SET
-meanTr = mean(XTR,2);
-XRTRAIN=bsxfun(@minus,XTR,meanTr);
-clear XTR;
-varTr = var(XRTRAIN,0,2);
-XNTRAIN=bsxfun(@rdivide,XRTRAIN,varTr);
-clear XRTRAIN;
 [W, ~]=princomp(XNTRAIN,'econ');
 STr=XNTRAIN*W;
 
 if(training)
-    meanTe = mean(XTE,2);
-    XRTEST=bsxfun(@minus,XTE,meanTe);
-    clear XTE;
-    varTe = var(XRTEST,0,2);
-    XNTEST=bsxfun(@rdivide,XRTEST,varTe);
-    clear XRTEST;
     STe=XNTEST*W;
 end
 
@@ -85,7 +80,7 @@ end
 % COMPUTE THE WEIGHTINGS
 lambda=zeros(1,C);
 for c = 1:C,
-    lambda(c)=weighting(p(c,:),d,k);
+    lambda(c)=weighting(p(c,:)',d,k);
 end
 
 % RECONSTRUCT THE SIGNALS.
@@ -100,6 +95,8 @@ if(training)
     Xhat(~trSet,:) = XTEhat;
     clear XTRhat XTEhat;
 end
+Xhat = bsxfun(@times, Xhat, varTr);
+Xhat = bsxfun(@plus, Xhat, meanTr);
 
 % RETURN THE PARAMETERS
 nout = max(nargout,1) - 1;
@@ -128,7 +125,7 @@ sumatoria = 1;
 for jarl=1:length(d),
     if ndims(p)==1
         sumatoria = sumatoria + power(-1,1-d(jarl))*exp(-squeeze(abs(p(jarl)))/k);
-    elseif ndims(p)==2
+    elseif ismatrix(p)
         sumatoria = sumatoria + power(-1,1-d(jarl))*exp(-squeeze(abs(p(jarl,:)))/k);
     elseif ndims(p)==3
         sumatoria = sumatoria + power(-1,1-d(jarl))*exp(-squeeze(abs(p(jarl,:,:)))/k);
