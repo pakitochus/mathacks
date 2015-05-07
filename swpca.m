@@ -6,7 +6,7 @@ function [Xhat, varargout] = swpca(X,cat,d,varargin)
 % of the variable) and k, the inverse of the significance threshold. It
 % returns the enhanced dataset.
 % USAGE:
-%   Xhat = SWPCA(X,cat,d). computes the signal using k=20 and returns the
+%   Xhat = SWPCA(X,cat,d). computes the signal using k=0.05 and returns the
 %   reconstructed signal. 
 % 
 %   Xhat = SWPCA(X,cat,d,'k',k) specifies the current k. 
@@ -19,7 +19,7 @@ function [Xhat, varargout] = swpca(X,cat,d,varargin)
 %   the pseudoinverse of the weightning matrix A. 
 
 % Sets the defaults.
-k = 20;
+k = 0.05;
 N = size(X,1);
 trSet = true(N,1); % binary vector with the training set.
 training = false;
@@ -69,7 +69,11 @@ end
 % PERFORM ANOVA ON THE COMPONENTS OF THE TRAINING SET
 vars = cell(1,length(d));
 for v=1:length(d)
-    vars{v} = cat(:,v);
+    if(training)
+        vars{v} = cat(trSet,v);
+    else
+        vars{v} = cat(:, v);
+    end
 end
 C = size(STr,2);
 p = zeros(C,length(d));
