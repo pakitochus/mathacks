@@ -120,8 +120,8 @@ nout = max(nargout,1) - 1;
 if nout>1
     if(training)
         S = zeros(N,L);
-        S(training,:) = STr;
-        S(~training,:) = STe;
+        S(trSet,:) = STr;
+        S(~trSet,:) = STe;
         clear STr STe;
         varargout{1} = S;
     else
