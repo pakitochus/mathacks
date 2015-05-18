@@ -77,7 +77,7 @@ if(training)
     STe=XNTEST*W;
 end
 
-A = stats.W;
+%A = stats.W;
 
 % PERFORM ANOVA ON THE COMPONENTS OF THE TRAINING SET
 vars = cell(1,length(d));
