@@ -50,40 +50,34 @@ if(size(catVars,2)~=length(d))
 end
 
 % PERFORM PLS ON THE TRAINING SET
-if size(catVars,1)~=size(X,1),
-    catVars = catVars';
-end
-meanTr = mean(X(trSet,:),1);
-meanY = mean(catVars(trSet,:),1);
-X0 = bsxfun(@minus, X, meanTr);
-Y0 = bsxfun(@minus, catVars, meanY);
-clear X; 
+% if size(catVars,1)~=size(X,1),
+%     catVars = catVars';
+% end
+% meanTr = mean(X(trSet,:),1);
+% meanY = mean(catVars(trSet,:),1);
+% X0 = bsxfun(@minus, X, meanTr);
+% Y0 = bsxfun(@minus, catVars, meanY);
+% clear X; 
 
-ncomp = 10; 
-[W,~] = simpls(X0(trSet,:),Y0(trSet),ncomp);
-STr = X0(trSet,:)*W; 
+meanTr = mean(X,2);
+X = bsxfun(@minus,X,meanTr);
+varTr = var(X,0,2);
+X = bsxfun(@rdivide,X,varTr);
 if(training)
-    STe = X0(~trSet,:)*W; 
+    XNTEST = X(~trSet,:);
 end
-% meanTr = mean(X,2);
-% X = bsxfun(@minus,X,meanTr);
-% varTr = var(X,0,2);
-% X = bsxfun(@rdivide,X,varTr);
-% if(training)
-%     XNTEST = X(~trSet,:);
-% end
-% XNTRAIN = X(trSet,:);
-% clear X;
+XNTRAIN = X(trSet,:);
+clear X;
 
-% % PERFORM PCA OVER THE TRAINING SET
-% [W, ~]=princomp(XNTRAIN,'econ');
-% STr=XNTRAIN*W;
+% PERFORM PCA OVER THE TRAINING SET
+[W, ~]=princomp(XNTRAIN,'econ');
+STr=XNTRAIN*W;
 
-% if(training)
-%     STe=XNTEST*W;
-% end
+if(training)
+    STe=XNTEST*W;
+end
 
-% A = stats.W;
+A = stats.W;
 
 % PERFORM ANOVA ON THE COMPONENTS OF THE TRAINING SET
 vars = cell(1,length(d));
@@ -118,7 +112,7 @@ if(training)
     Xhat(~trSet,:) = XTEhat;
     clear XTRhat XTEhat;
 end
-% Xhat = bsxfun(@times, Xhat, varTr);
+Xhat = bsxfun(@times, Xhat, varTr);
 Xhat = bsxfun(@plus, Xhat, meanTr);
 
 % RETURN THE PARAMETERS
@@ -157,88 +151,4 @@ for jarl=1:length(d),
     end
 end
 y = sumatoria/2;
-end
-
-%SIMPLS Basic SIMPLS.  Performs no error checking.
-function [Xloadings,Yloadings,Xscores,Yscores,Weights] = simpls(X0,Y0,ncomp)
-
-[n,dx] = size(X0);
-dy = size(Y0,2);
-
-% Preallocate outputs
-outClass = superiorfloat(X0,Y0);
-Xloadings = zeros(dx,ncomp,outClass);
-Yloadings = zeros(dy,ncomp,outClass);
-if nargout > 2
-    Xscores = zeros(n,ncomp,outClass);
-    Yscores = zeros(n,ncomp,outClass);
-    if nargout > 4
-        Weights = zeros(dx,ncomp,outClass);
-    end
-end
-
-% An orthonormal basis for the span of the X loadings, to make the successive
-% deflation X0'*Y0 simple - each new basis vector can be removed from Cov
-% separately.
-V = zeros(dx,ncomp);
-
-Cov = X0'*Y0;
-for i = 1:ncomp
-    % Find unit length ti=X0*ri and ui=Y0*ci whose covariance, ri'*X0'*Y0*ci, is
-    % jointly maximized, subject to ti'*tj=0 for j=1:(i-1).
-    [ri,si,ci] = svd(Cov,'econ'); ri = ri(:,1); ci = ci(:,1); si = si(1);
-    ti = X0*ri;
-    normti = norm(ti); ti = ti ./ normti; % ti'*ti == 1
-    Xloadings(:,i) = X0'*ti;
-    
-    qi = si*ci/normti; % = Y0'*ti
-    Yloadings(:,i) = qi;
-    
-    if nargout > 2
-        Xscores(:,i) = ti;
-        Yscores(:,i) = Y0*qi; % = Y0*(Y0'*ti), and proportional to Y0*ci
-        if nargout > 4
-            Weights(:,i) = ri ./ normti; % rescaled to make ri'*X0'*X0*ri == ti'*ti == 1
-        end
-    end
-    
-    % Update the orthonormal basis with modified Gram Schmidt (more stable),
-    % repeated twice (ditto).
-    vi = Xloadings(:,i);
-    for repeat = 1:2
-        for j = 1:i-1
-            vj = V(:,j);
-            vi = vi - (vj'*vi)*vj;
-        end
-    end
-    vi = vi ./ norm(vi);
-    V(:,i) = vi;
-    
-    % Deflate Cov, i.e. project onto the ortho-complement of the X loadings.
-    % First remove projections along the current basis vector, then remove any
-    % component along previous basis vectors that's crept in as noise from
-    % previous deflations.
-    Cov = Cov - vi*(vi'*Cov);
-    Vi = V(:,1:i);
-    Cov = Cov - Vi*(Vi'*Cov);
-end
-
-if nargout > 2
-    % By convention, orthogonalize the Y scores w.r.t. the preceding Xscores,
-    % i.e. XSCORES'*YSCORES will be lower triangular.  This gives, in effect, only
-    % the "new" contribution to the Y scores for each PLS component.  It is also
-    % consistent with the PLS-1/PLS-2 algorithms, where the Y scores are computed
-    % as linear combinations of a successively-deflated Y0.  Use modified
-    % Gram-Schmidt, repeated twice.
-    for i = 1:ncomp
-        ui = Yscores(:,i);
-        for repeat = 1:2
-            for j = 1:i-1
-                tj = Xscores(:,j);
-                ui = ui - (tj'*ui)*tj;
-            end
-        end
-        Yscores(:,i) = ui;
-    end
-end
 end
