@@ -68,6 +68,11 @@ if(training)
 end
 XNTRAIN = X(trSet,:);
 clear X;
+colmean = mean(XNTRAIN,1);
+XNTRAIN = bsxfun(@minus, XNTRAIN, colmean); 
+if(training)
+    XNTEST = bsxfun(@minus,XNTEST,colmean);
+end
 
 % PERFORM PCA OVER THE TRAINING SET
 [W, ~]=princomp(XNTRAIN,'econ');
@@ -112,6 +117,7 @@ if(training)
     Xhat(~trSet,:) = XTEhat;
     clear XTRhat XTEhat;
 end
+Xhat = bsxfun(@plus, Xhat, colmean);
 Xhat = bsxfun(@times, Xhat, varTr);
 Xhat = bsxfun(@plus, Xhat, meanTr);
 
