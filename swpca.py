@@ -1,13 +1,16 @@
-# /usr/bin/python3
+# module swpca
 
 import numpy as np
 from scipy.linalg import svd
 from scipy.stats import f_oneway
 
-def swpca(dataset, catvar, k=0.05):
+def swpca(dataset, catvar, k=0.05, trset=False):
     N = dataset.shape[0]
-    trSet = np.ones(N) # binary vector with the training set.
-    training = False
+    if not trset:
+        trset=np.ones(N)
+        training = False
+    else:
+        training = True
 
     # Per subject mean substraction (doesn't depend on training set)
     subjMean = dataset.mean(axis=1) 
@@ -62,6 +65,7 @@ def swpca(dataset, catvar, k=0.05):
     #     Each sample is from a normally distributed population.
     #     The population standard deviations of the groups are all equal. This property is known as homoscedasticity.
     labs = np.unique(catvar)
+    print(labs)
     F,p_val = f_oneway(STr[catvar[trset==1]==labs[0],:], STr[catvar[trset==1]==labs[1],:])
     
     # Compute the weightings
