@@ -1,16 +1,21 @@
 function [bestc,bestg] = selectC(ytrain,XTRAIN,kernel)
-% Selects optimum C value in a linear kernel (using LIBLINEAR) or another SVM kernel (using LIBSVM). 
+% Selects optimum C value in a linear kernel (using MATLAB) or another SVM kernel (using LIBSVM).
 bestcv = 0;
-for log2c = -15:5,
+XTRAIN = sparse(XTRAIN);
+log2g=0;bestg=0;
+for log2c = -10:5,
     
     if(kernel==0)
-        cmd = [' -v 5  -c ', num2str(2^log2c), ' -q'];
-        cv = train(ytrain, sparse(XTRAIN), cmd);
-        if (cv >= bestcv),
-            bestcv = cv; bestc = 2^log2c;
-        end
-        log2g=NaN;
-        bestg=NaN;
+%         cmd=['-t ', num2str(kernel),' -v 5 -c ', num2str(2^log2c), ' -q'];
+%         cv = svmtrain(ytrain, XTRAIN, cmd);
+%         if (cv >= bestcv),
+%             bestcv = cv; bestc = 2^log2c; 
+%         end
+                cmd = [' -v 5  -c ', num2str(2^log2c), ' -q'];
+                cv = train(ytrain, XTRAIN, cmd);
+                if (cv >= bestcv),
+                    bestcv = cv; bestc = 2^log2c;
+                end
     else
         for log2g = -22:2,
             cmd=['-t ', num2str(kernel),' -v 5 -c ', num2str(2^log2c), ' -g ', num2str(2^log2g), ' -q'];
