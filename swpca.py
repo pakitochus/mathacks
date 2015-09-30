@@ -15,7 +15,8 @@ def swpca(dataset, catvar, k=0.05, trset=False):
     # Per subject mean substraction (doesn't depend on training set)
     subjMean = dataset.mean(axis=1) 
     X = (dataset.transpose()-subjMean).transpose()
-
+    del dataset    
+    
     # Standardize the data (depends on training set)
     meanTr = X[trset==1,:].mean(axis=0)
     X = X - meanTr
@@ -83,10 +84,10 @@ def swpca(dataset, catvar, k=0.05, trset=False):
         del XTRhat,XTEhat
     else:
         Xhat = STr.dot(weightMat).dot(A) 
-    
-    Xhat = (Xhat.T+subjMean).T
+        
     Xhat = Xhat*varTr
     Xhat = Xhat+meanTr
+    Xhat = (Xhat.T+subjMean).T
     
     return Xhat, weights, A
 
