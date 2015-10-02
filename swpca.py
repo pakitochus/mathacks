@@ -66,7 +66,6 @@ def swpca(dataset, catvar, k=0.05, trset=False):
     #     Each sample is from a normally distributed population.
     #     The population standard deviations of the groups are all equal. This property is known as homoscedasticity.
     labs = np.unique(catvar)
-    print(labs)
     F,p_val = f_oneway(STr[catvar[trset==1]==labs[0],:], STr[catvar[trset==1]==labs[1],:])
     
     # Compute the weightings
