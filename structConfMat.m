@@ -23,6 +23,7 @@ function [performance,confMat] = structConfMat(perf)
     performance.PositiveLikelihood = performance.Sensitivity/(1-performance.Specificity);
     performance.NegativeLikelihood = (1-performance.Sensitivity)/performance.Specificity; 
     performance.F1 = 2*performance.ppv*performance.Sensitivity/(performance.ppv+performance.Sensitivity);
+    performance.precision = performance.Sensitivity/(performance.Sensitivity+1-performance.Specificity);
 end
 
 % Estructura en Matlab:
